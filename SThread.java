@@ -8,7 +8,7 @@ public class SThread extends Thread
 	private Object [][] RTable; // routing table
 	private PrintWriter out, outTo; // writers (for writing back to the machine and to destination)
    private BufferedReader in; // reader (for reading from the machine connected to)
-	private String inputLine, outputLine, destination, addr; // communication strings
+	private String inputLine, outputLine, destination, addr, destSocket; // communication strings
 	private Socket outSocket; // socket for communicating with a destination
 	private int ind; // indext in the routing table
 
@@ -31,7 +31,8 @@ public class SThread extends Thread
 		{
 		// Initial sends/receives
 		destination = in.readLine(); // initial read (the destination for writing)
-		System.out.println("Forwarding to " + destination);
+		destSocket = in.readLine();
+		System.out.println("Forwarding to " + destination + "on port " + destSocket);
 		out.println("Connected to the router."); // confirmation of connection
 		
 		// waits 10 seconds to let the routing table fill with all machines' information
@@ -43,38 +44,18 @@ public class SThread extends Thread
 		}
 		
 		// loops through the routing table to find the destination
-		long initialTime = System.nanoTime();
-		for ( int i=0; i<10; i++) {
-			if (destination.equals((String) RTable[i][0])){
-				outSocket = (Socket) RTable[i][1]; // gets the socket for communication from the table
-				System.out.println("Found destination: " + destination);
-				outTo = new PrintWriter(outSocket.getOutputStream(), true); // assigns a writer
-			}
-		}
-			long afterTime = System.nanoTime();
-			long time =  afterTime-initialTime;
-			System.out.println("Total Time to Connect = "+ time);
-
-		// Communication loop
-		while ((inputLine = in.readLine()) != null) {
-            int messageLength = inputLine.length();
-			long messageTime_start = System.nanoTime();
-
-            System.out.println("Client/Server said: " + inputLine);
-            if (inputLine.equals("Bye.")) // exit statement
-					break;
-            outputLine = inputLine; // passes the input from the machine to the output string for the destination
-				
-				if ( outSocket != null){				
-				outTo.println(outputLine); // writes to the destination
-				}
-			long messageTime_end = System.nanoTime();
-			long messageTime = messageTime_end - messageTime_start;
-
-			System.out.println("Message Size Count = "+ messageLength+ " characters");
-			System.out.println("Time to send message = "+ messageTime+ " nanoseconds");
-
-       }// end while
+		for ( int i=0; i<50; i++)
+				{
+					if(RTable[1][0] != null)
+					{
+						if (destination.equals((String) RTable[i][0])){
+							outSocket = (Socket) RTable[i][1]; // gets the socket for communication from the table
+							if(destSocket.equals((String)outSocket.getPort())) {
+								System.out.println("Found destination: " + destination + " " + destSocket);
+								out.println((String)RTable[i][0]);
+								out.println((String)outSocket.getPort());
+							}
+				}}}
 		 }// end try
 			catch (IOException e) {
                System.err.println("Could not listen to socket.");
